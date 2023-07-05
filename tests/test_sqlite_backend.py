@@ -61,7 +61,7 @@ async def test_fill_db(adb, dummy_file, dummy_data):
     dummy_data = dummy_data.split("\n")  # split dummy data by new line
     dummy_data = [
         tuple(row.split("\t")) for row in dummy_data
-    ]  # every line is now tuple
+    ]  # every line is now tuple; splited by tabulator
     async with adb.conn.execute(sql) as cursor:
         index = 0
         async for row in cursor:  # one row is tuple of columns
