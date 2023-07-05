@@ -15,13 +15,8 @@ async def search_async(
     word, lang, fulltext: bool = None
 ) -> AsyncIterator[Result] | None:
     adb = SQLiteBackend(FILE_DB)
-    try:
-        await adb.db_init()
-        yield await adb.search_in_db(word, lang, fulltext)
-    except:
-        raise
-    finally:
-        await adb.conn.close()
+    await adb.db_init()
+    return await adb.search_sorted(word, lang, fulltext)
 
 
 class SQLiteBackend(DBBackend):

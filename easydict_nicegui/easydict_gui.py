@@ -1,7 +1,8 @@
 from nicegui import ui
+import asyncio
 
 # internal imports
-from backends import sqlite_backend
+from backends.sqlite_backend import search_async
 from backends.backend import ResultList
 from settings import images
 from time import sleep
@@ -10,10 +11,10 @@ from time import sleep
 class EasyDict:
     def __init__(self):
         self.title = "EasyDict-GUI"
-        self.db = sqlite_backend.SQLiteBackend()
         self.lang = "eng"
         self.results = ResultList()
         self.search_in_progress = False
+        self.task = None
 
     def create_header(self):
         with ui.header().classes(replace="row items-center") as header:
@@ -64,20 +65,33 @@ class EasyDict:
         self.create_header()
         self.create_body()
         ui.run(**ui_args)
-
-    def search_in_db(self, word):
-        print(word.value)
-        if not self.search_in_progress:
-            self.search_in_progress = True
+    
+    
+    async def search_task(self, word):
             fulltext = False
-            # if self.fulltext.get() == "Fulltext":
-            fulltext = True
-            self.results = self.db.search_sorted(
+            results = search_async(
                 word=word.value, lang=self.lang, fulltext=fulltext
             )
-            self.create_body.refresh()
-            # count = len(self.results.items)
-            self.search_in_progress = False
+            self.results = await results
+            print(self.results)
+            if self.results:
+                self.create_body.refresh()
+
+
+    async def search_in_db(self, word):
+        if word.value:
+            async with asyncio.TaskGroup() as tg:
+                if self.task:
+                    self.task.cancel()
+                    try:
+                        await self.task
+                    except asyncio.CancelledError:
+                        pass
+                self.task = tg.create_task(self.search_task(word))
+                # count = len(self.results.items)
+
+
+
 
 
 if __name__ in {"__main__", "__mp_main__"}:  # __mp_main__ to allow multiprocessing
