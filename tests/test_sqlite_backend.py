@@ -29,7 +29,7 @@ async def test_prepare_db(adb):
     sql = (f"SELECT count(*) FROM sqlite_master WHERE type='table' AND name=?", [f"{table_name}"])
     
     async with adb.conn.execute(*sql) as cursor:
-        results = await cursor.fetchall()
+        results = await cursor.fetchall() # result format is here [(0,)]
         assert results[0][0] == 0 # should find 0 match, table wasn't created yet
     
     await adb.prepare_db(table_name) # create table
