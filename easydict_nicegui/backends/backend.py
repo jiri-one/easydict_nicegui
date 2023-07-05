@@ -1,6 +1,6 @@
 from abc import ABC, abstractmethod
 from difflib import SequenceMatcher
-from typing import Iterator, Callable
+from typing import AsyncIterator, Callable
 from dataclasses import dataclass, field
 from bisect import insort
 from operator import attrgetter
@@ -32,17 +32,18 @@ class DBBackend(ABC):
     @abstractmethod
     def search_in_db(
         self, word, lang, fulltext: bool = None
-    ) -> Iterator[Result] | None:
+    ) -> AsyncIterator[Result] | None:
         """The only mandatory method that provides a database search and that must return a result iterator of Results or None."""
 
-    def search_sorted(self, word, lang, fulltext: bool = None) -> ResultList | None:
+    async def search_sorted(self, word, lang, fulltext: bool = None) -> ResultList | None:
         results_from_db = self.search_in_db(word, lang, fulltext)
-        if not results_from_db:
-            return None
         results = ResultList(word, lang, fulltext)
-        for result in results_from_db:
+        async for result in results_from_db:
             result.matchratio = SequenceMatcher(
                 None, getattr(result, lang), word
             ).ratio()
             results.add(result)
-        return results
+        if results:
+            return results
+        else:
+            return None
