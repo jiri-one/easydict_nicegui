@@ -1,10 +1,23 @@
 from pathlib import Path
-import sqlite3
+import aiosqlite
 import re
 from typing import Iterator
+import asyncio
 
 # internal imports
 from .backend import DBBackend, Result
+
+# TODO: import it from settings, not hardcode it
+FILE_DB = Path(__file__).parent.parent / "dict_data/easydict.db"
+
+async def search_async(word, lang, fulltext: bool = None
+    ) -> Iterator[Result] | None:
+    adb = SQLiteBackend(FILE_DB)
+    try:
+        await adb.db_init()
+        return await adb.search_in_db(word, lang, fulltext)
+    except:
+        raise
 
 
 class SQLiteBackend(DBBackend):
@@ -14,31 +27,33 @@ class SQLiteBackend(DBBackend):
         reg = re.compile(expr)
         return reg.search(item) is not None
 
-    def __init__(self):
+    def __init__(self, file):
         try:
-            # TODO: import it from settings, not hardcode it
-            db_file = Path(__file__).parent.parent / "dict_data/easydict.db"
-            if not db_file.exists():
+            self.db_file = file
+            if not self.db_file.exists():
                 raise FileNotFoundError()
         except FileNotFoundError:
-            print(f"DB file {db_file} not found.")
+            print(f"DB file {self.db_file} not found.")
             exit()
-        conn_file = sqlite3.connect(db_file)
-        self.conn = sqlite3.connect(':memory:')
-        conn_file.backup(self.conn)
-        self.conn.create_function("REGEXP", 2, self.regexp)
-        self.cursor = self.conn.cursor()
+    
+    async def db_init(self):
+        self.conn = await aiosqlite.connect(':memory:')
+        async with aiosqlite.connect(self.db_file) as conn_file:    
+            await conn_file.backup(self.conn)
+        await self.conn.create_function("REGEXP", 2, self.regexp)
+        self.cursor = await self.conn.cursor()
 
-    def prepare_db(self, db_name: str):
+    async def prepare_db(self, db_name: str):
         """It creates a table in the database.
         A method that is not (yet) used in production."""
         sql = f"""CREATE TABLE if not exists {db_name}
                   (eng TEXT, cze TEXT, notes TEXT,
                    special TEXT, author TEXT)
                 """
-        self.cursor.execute(sql)
+        await self.cursor.execute(sql)
 
-    def fill_db(self, raw_file: str | Path = None):
+
+    async def fill_db(self, raw_file: str | Path = None):
         """Filling the database with data.
         A method that is not (yet) used in production."""
         if not raw_file:
@@ -61,21 +76,21 @@ class SQLiteBackend(DBBackend):
                         ),  # sometimes there are some unnecessary new lines
                     )
                 )
-        self.cursor.executemany("INSERT INTO eng_cze VALUES (?,?,?,?,?)", data)
+        await self.cursor.executemany("INSERT INTO eng_cze VALUES (?,?,?,?,?)", data)
         # save data
-        self.conn.commit()
+        await self.conn.commit()
 
-    def search_in_db(
+    async def search_in_db(
         self, word, lang, fulltext: bool = None
     ) -> Iterator[Result] | None:
         if fulltext:
             sql = (f"SELECT * FROM eng_cze WHERE {lang} LIKE ?", [f"%{word}%"])
         else:
             sql = (f"SELECT * FROM eng_cze WHERE {lang} REGEXP ?", [rf"\b{word}\b"])
-        self.cursor.execute(*sql)
-        results = self.cursor.fetchall()
+        await self.cursor.execute(*sql)
+        results = await self.cursor.fetchall()
         if not results:
-            return None
-        for result in iter(results):
+            return
+        async for result in results:
             yield Result(*result)
             # yield dict(zip(("eng", "cze", "notes", "special", "author"), result))
