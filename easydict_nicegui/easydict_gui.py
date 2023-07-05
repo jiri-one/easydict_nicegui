@@ -15,28 +15,28 @@ class EasyDict:
         self.results = ResultList()
         self.search_in_progress = False
 
-
     def create_header(self):
         with ui.header().classes(replace="row items-center") as header:
             ui.button(on_click=lambda: left_drawer.toggle()).props(
                 "flat color=white icon=menu"
             )
             ui.input(
-                    placeholder="start typing",
-                    on_change=self.search_in_db,
-                    validation={"Input too short": lambda value: len(value) > 3},
-                )
-             # ui.label("EasyDict").style(
+                placeholder="start typing",
+                on_change=self.search_in_db,
+                validation={"Input too short": lambda value: len(value) > 3},
+            )
+            # ui.label("EasyDict").style(
             #     "font-weight: bold; font-size: 150%; justify-content: center; margin: auto; display: flex;"
             # )
 
         with ui.left_drawer() as left_drawer:
             ui.label("Side menu")
-    
-    
+
     @ui.refreshable
     def create_body(self):
-        with ui.column().style("justify-content: center; margin: auto; display: flex;") as self.main_column:
+        with ui.column().style(
+            "justify-content: center; margin: auto; display: flex;"
+        ) as self.main_column:
             if not self.results.items:
                 ui.label("Welcome to EasyDict").style(
                     "text-align: center; font-weight: bold; font-size: 140%; justify-content: center; margin: auto; display: flex;"
@@ -52,7 +52,6 @@ class EasyDict:
             with ui.column():
                 for item in self.results.items:
                     ui.label(f"{item.cze}")
-
 
     def __call__(self):
         ui_args = {
@@ -71,15 +70,14 @@ class EasyDict:
         if not self.search_in_progress:
             self.search_in_progress = True
             fulltext = False
-            #if self.fulltext.get() == "Fulltext":
+            # if self.fulltext.get() == "Fulltext":
             fulltext = True
-            self.results = self.db.search_sorted(word=word.value, lang=self.lang, fulltext=fulltext)
+            self.results = self.db.search_sorted(
+                word=word.value, lang=self.lang, fulltext=fulltext
+            )
             self.create_body.refresh()
-            #count = len(self.results.items)
+            # count = len(self.results.items)
             self.search_in_progress = False
-
-
-            
 
 
 if __name__ in {"__main__", "__mp_main__"}:  # __mp_main__ to allow multiprocessing

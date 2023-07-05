@@ -10,14 +10,16 @@ from .backend import DBBackend, Result
 # TODO: import it from settings, not hardcode it
 FILE_DB = Path(__file__).parent.parent / "dict_data/easydict.db"
 
-async def search_async(word, lang, fulltext: bool = None
-    ) -> Iterator[Result] | None:
+
+async def search_async(word, lang, fulltext: bool = None) -> Iterator[Result] | None:
     adb = SQLiteBackend(FILE_DB)
     try:
         await adb.db_init()
-        return await adb.search_in_db(word, lang, fulltext)
+        yield await adb.search_in_db(word, lang, fulltext)
     except:
         raise
+    finally:
+        await adb.conn.close()
 
 
 class SQLiteBackend(DBBackend):
@@ -35,13 +37,12 @@ class SQLiteBackend(DBBackend):
         except FileNotFoundError:
             print(f"DB file {self.db_file} not found.")
             exit()
-    
+
     async def db_init(self):
-        self.conn = await aiosqlite.connect(':memory:')
-        async with aiosqlite.connect(self.db_file) as conn_file:    
+        self.conn = await aiosqlite.connect(":memory:")
+        async with aiosqlite.connect(self.db_file) as conn_file:
             await conn_file.backup(self.conn)
         await self.conn.create_function("REGEXP", 2, self.regexp)
-        #self.cursor = await self.conn.cursor()
 
     async def prepare_db(self, db_name: str):
         """It creates a table in the database.
@@ -53,8 +54,7 @@ class SQLiteBackend(DBBackend):
         async with self.conn.execute(sql):
             pass
 
-
-    async def fill_db(self, raw_file: str | Path = None):
+    async def fill_db(self, raw_file: Path = None):
         """Filling the database with data.
         A method that is not (yet) used in production."""
         if not raw_file:
@@ -77,7 +77,7 @@ class SQLiteBackend(DBBackend):
                         ),  # sometimes there are some unnecessary new lines
                     )
                 )
-        await self.cursor.executemany("INSERT INTO eng_cze VALUES (?,?,?,?,?)", data)
+        await self.conn.executemany("INSERT INTO eng_cze VALUES (?,?,?,?,?)", data)
         # save data
         await self.conn.commit()
 
