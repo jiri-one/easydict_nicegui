@@ -38,7 +38,9 @@ class EasyDict:
     def create_body(self):
         with ui.column().style("justify-content: center; margin: auto; display: flex;") as self.main_column:
             if not self.results.items:
-                # ui.label("Welcome to EasyDict").style("font-weight: bold; font-size: 150%; justify-content: center; margin: auto; display: flex;")
+                ui.label("Welcome to EasyDict").style(
+                    "text-align: center; font-weight: bold; font-size: 140%; justify-content: center; margin: auto; display: flex;"
+                )
                 ui.image(images["ed_icon.png"]).style("justify-content: center;")
 
                 ui.label(
@@ -56,7 +58,7 @@ class EasyDict:
         ui_args = {
             "native": True,
             "title": self.title,
-            "window_size": (280, 550),
+            "window_size": (700, 1500),
             "show": True,
             "dark": True,
         }

@@ -11,6 +11,7 @@ packages = [{include = "easydict_gui"}]
 python = ">=3.11,<3.12"
 pythonnet = ">=3.0.1"
 nicegui = "^1.2.20"
+aiosqlite = "^0.19.0"
 
 
 [tool.poetry.group.dev.dependencies]
