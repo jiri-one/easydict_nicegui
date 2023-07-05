@@ -25,9 +25,20 @@ english	czech	notes	specials	authors
     """.strip()
 
 async def test_prepare_db(adb):
-    await adb.prepare_db("eng_cze")
-    await adb.cursor.close()
-    await adb.conn.close()
+    table_name = "test"
+    sql = (f"SELECT count(*) FROM sqlite_master WHERE type='table' AND name=?", [f"{table_name}"])
+    
+    async with adb.conn.execute(*sql) as cursor:
+        results = await cursor.fetchall()
+        assert results[0][0] == 0 # should find 0 match, table wasn't created yet
+    
+    await adb.prepare_db(table_name) # create table
+    
+    async with adb.conn.execute(*sql) as cursor:
+        results = await cursor.fetchall()
+        assert results[0][0] == 1 # should find 1 match
+
+    await adb.conn.close() # close whole connection
 
 
 # async def test_fill_db(adb, dummy_data):

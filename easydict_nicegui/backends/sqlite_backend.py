@@ -41,7 +41,7 @@ class SQLiteBackend(DBBackend):
         async with aiosqlite.connect(self.db_file) as conn_file:    
             await conn_file.backup(self.conn)
         await self.conn.create_function("REGEXP", 2, self.regexp)
-        self.cursor = await self.conn.cursor()
+        #self.cursor = await self.conn.cursor()
 
     async def prepare_db(self, db_name: str):
         """It creates a table in the database.
@@ -50,7 +50,8 @@ class SQLiteBackend(DBBackend):
                   (eng TEXT, cze TEXT, notes TEXT,
                    special TEXT, author TEXT)
                 """
-        await self.cursor.execute(sql)
+        async with self.conn.execute(sql):
+            pass
 
 
     async def fill_db(self, raw_file: str | Path = None):
