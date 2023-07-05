@@ -28,6 +28,7 @@ eng	cze	note	special	author
 english	czech	notes	specials	authors
     """.strip()
 
+
 @pytest.fixture
 def dummy_file(tmp_path, dummy_data):
     file = tmp_path / "test.db"
@@ -54,13 +55,15 @@ async def test_prepare_db(adb):
 
 
 async def test_fill_db(adb, dummy_file, dummy_data):
-    await adb.prepare_db("eng_cze") # create table
+    await adb.prepare_db("eng_cze")  # create table
     await adb.fill_db(dummy_file)  # fill table with dummy data from dummy file
-    sql = "SELECT * FROM eng_cze" # get all data from table
-    dummy_data = dummy_data.split("\n") # split dummy data by new line
-    dummy_data = [tuple(row.split("\t")) for row in dummy_data] # every line is now tuple
+    sql = "SELECT * FROM eng_cze"  # get all data from table
+    dummy_data = dummy_data.split("\n")  # split dummy data by new line
+    dummy_data = [
+        tuple(row.split("\t")) for row in dummy_data
+    ]  # every line is now tuple
     async with adb.conn.execute(sql) as cursor:
         index = 0
-        async for row in cursor: # one row is tuple of columns
+        async for row in cursor:  # one row is tuple of columns
             assert row == dummy_data[index]
             index += 1
