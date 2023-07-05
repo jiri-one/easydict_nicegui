@@ -1,7 +1,7 @@
 from pathlib import Path
 import aiosqlite
 import re
-from typing import Iterator
+from typing import AsyncIterator
 import asyncio
 
 # internal imports
@@ -11,7 +11,9 @@ from .backend import DBBackend, Result
 FILE_DB = Path(__file__).parent.parent / "dict_data/easydict.db"
 
 
-async def search_async(word, lang, fulltext: bool = None) -> Iterator[Result] | None:
+async def search_async(
+    word, lang, fulltext: bool = None
+) -> AsyncIterator[Result] | None:
     adb = SQLiteBackend(FILE_DB)
     try:
         await adb.db_init()
@@ -83,15 +85,12 @@ class SQLiteBackend(DBBackend):
 
     async def search_in_db(
         self, word, lang, fulltext: bool = None
-    ) -> Iterator[Result] | None:
+    ) -> AsyncIterator[Result]:
         if fulltext:
             sql = (f"SELECT * FROM eng_cze WHERE {lang} LIKE ?", [f"%{word}%"])
         else:
             sql = (f"SELECT * FROM eng_cze WHERE {lang} REGEXP ?", [rf"\b{word}\b"])
-        await self.cursor.execute(*sql)
-        results = await self.cursor.fetchall()
-        if not results:
-            return
-        async for result in results:
-            yield Result(*result)
-            # yield dict(zip(("eng", "cze", "notes", "special", "author"), result))
+
+        async with self.conn.execute(*sql) as cursor:
+            async for row in cursor:
+                yield Result(*row)

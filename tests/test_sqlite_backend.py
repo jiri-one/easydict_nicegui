@@ -3,6 +3,7 @@ import pytest_asyncio
 
 # internal imports
 from easydict_nicegui.backends.sqlite_backend import search_async, SQLiteBackend
+from easydict_nicegui.backends.backend import Result
 
 # type anotations
 adb: SQLiteBackend
@@ -61,9 +62,25 @@ async def test_fill_db(adb, dummy_file, dummy_data):
     dummy_data = dummy_data.split("\n")  # split dummy data by new line
     dummy_data = [
         tuple(row.split("\t")) for row in dummy_data
-    ]  # every line is now tuple; splited by tabulator
+    ]  # every line is now tuple; originally each element was separated by a tab
     async with adb.conn.execute(sql) as cursor:
         index = 0
         async for row in cursor:  # one row is tuple of columns
             assert row == dummy_data[index]
             index += 1
+
+
+async def test_search_in_db(adb, dummy_file):
+    await adb.prepare_db("eng_cze")  # create table
+    
+    search = adb.search_in_db(word="test", lang="eng", fulltext=True)
+    async for x in aiter(search):
+        assert False # this will never run if no results are found
+
+    await adb.fill_db(dummy_file)  # fill table with dummy data from dummy file
+    # and try search again
+    async for result in adb.search_in_db(
+        word="test", lang="eng", fulltext=True
+    ):  
+        assert result # this time we should have some results
+        assert isinstance(result, Result) # and result should be in correct type
