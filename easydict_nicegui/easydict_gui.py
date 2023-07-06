@@ -17,7 +17,7 @@ class EasyDict:
         self.task = None
 
     def create_header(self):
-        with ui.header().classes(replace="row items-center") as header:
+        with ui.header().classes(add="column", replace="row items-center") as header:
             ui.button(on_click=lambda: left_drawer.toggle()).props(
                 "flat color=white icon=menu"
             )
@@ -26,9 +26,10 @@ class EasyDict:
                 on_change=self.search_in_db,
                 validation={"Input too short": lambda value: len(value) > 3},
             )
-            # ui.label("EasyDict").style(
-            #     "font-weight: bold; font-size: 150%; justify-content: center; margin: auto; display: flex;"
-            # )
+            toggle = ui.toggle(
+                options=["First letters", "Fulltext", "Whole word"],
+                value="First letters",
+            ).classes("column")
 
         with ui.left_drawer() as left_drawer:
             ui.label("Side menu")
@@ -52,7 +53,7 @@ class EasyDict:
                 return
             with ui.column():
                 for item in self.results.items:
-                    ui.label(f"{item.cze}")
+                    ui.label(f"{item.cze} | {item.eng}")
 
     def __call__(self):
         ui_args = {
@@ -65,18 +66,14 @@ class EasyDict:
         self.create_header()
         self.create_body()
         ui.run(**ui_args)
-    
-    
-    async def search_task(self, word):
-            fulltext = False
-            results = search_async(
-                word=word.value, lang=self.lang, fulltext=fulltext
-            )
-            self.results = await results
-            print(self.results)
-            if self.results:
-                self.create_body.refresh()
 
+    async def search_task(self, word):
+        fulltext = False
+        results = search_async(word=word.value, lang=self.lang, fulltext=fulltext)
+        self.results = await results
+        print(self.results)
+        if self.results:
+            self.create_body.refresh()
 
     async def search_in_db(self, word):
         if word.value:
@@ -89,9 +86,6 @@ class EasyDict:
                         pass
                 self.task = tg.create_task(self.search_task(word))
                 # count = len(self.results.items)
-
-
-
 
 
 if __name__ in {"__main__", "__mp_main__"}:  # __mp_main__ to allow multiprocessing

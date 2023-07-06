@@ -3,7 +3,6 @@ from difflib import SequenceMatcher
 from typing import AsyncIterator, Callable
 from dataclasses import dataclass, field
 from bisect import insort
-from operator import attrgetter
 
 
 @dataclass
@@ -25,7 +24,9 @@ class ResultList:
     items: list[Result] = field(default_factory=list)
 
     def add(self, item: Result):
-        insort(self.items, item, key=attrgetter("matchratio"))
+        insort(
+            self.items, item, key=lambda item: item.matchratio * -1
+        )  # to reverse order we need to multiple with -1
 
 
 class DBBackend(ABC):
@@ -35,7 +36,9 @@ class DBBackend(ABC):
     ) -> AsyncIterator[Result] | None:
         """The only mandatory method that provides a database search and that must return a result iterator of Results or None."""
 
-    async def search_sorted(self, word, lang, fulltext: bool = None) -> ResultList | None:
+    async def search_sorted(
+        self, word, lang, fulltext: bool = None
+    ) -> ResultList | None:
         results_from_db = self.search_in_db(word, lang, fulltext)
         results = ResultList(word, lang, fulltext)
         async for result in results_from_db:
