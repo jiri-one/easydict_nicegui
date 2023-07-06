@@ -71,7 +71,7 @@ class EasyDict:
         fulltext = False
         results = search_async(word=word.value, lang=self.lang, fulltext=fulltext)
         self.results = await results
-        print(self.results)
+        #print(self.results)
         if self.results:
             self.create_body.refresh()
 
