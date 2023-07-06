@@ -13,11 +13,11 @@ class EasyDict:
         self.title = "EasyDict-GUI"
         self.lang = "eng"
         self.results = ResultList()
-        self.search_in_progress = False
+        self.search = "First chars"
         self.task = None
 
     def create_header(self):
-        with ui.header().classes(add="column", replace="row items-center") as header:
+        with ui.header().classes(add="column", replace="row") as header:
             ui.button(on_click=lambda: left_drawer.toggle()).props(
                 "flat color=white icon=menu"
             )
@@ -25,11 +25,12 @@ class EasyDict:
                 placeholder="start typing",
                 on_change=self.search_in_db,
                 validation={"Input too short": lambda value: len(value) > 3},
-            )
+            ).style("width: 100%; margin-right: 10px; margin-left: 10px;")
             toggle = ui.toggle(
-                options=["First letters", "Fulltext", "Whole word"],
-                value="First letters",
-            ).classes("column")
+                options=["First chars", "Fulltext", "Whole word"],
+                value="First chars",
+                on_change=self.search_setter
+                ).style("width: 100%;")
 
         with ui.left_drawer() as left_drawer:
             ui.label("Side menu")
@@ -86,6 +87,10 @@ class EasyDict:
                         pass
                 self.task = tg.create_task(self.search_task(word))
                 # count = len(self.results.items)
+    
+    def search_setter(self, value):
+        self.search = value.value
+        print(self.search)
 
 
 if __name__ in {"__main__", "__mp_main__"}:  # __mp_main__ to allow multiprocessing
