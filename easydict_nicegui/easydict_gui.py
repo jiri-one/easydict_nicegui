@@ -5,7 +5,7 @@ import asyncio
 from backends.sqlite_backend import search_async
 from backends.backend import ResultList
 from settings import images
-from time import sleep
+from helpers import CreateHtml
 
 
 class EasyDict:
@@ -52,8 +52,8 @@ class EasyDict:
                 )
                 return
             with ui.column():
-                for item in self.results.items:
-                    ui.label(f"{item.cze} | {item.eng}")
+                create_html = CreateHtml(self.results.items, self.lang)
+                ui.html(create_html())
 
     def __call__(self):
         ui_args = {
