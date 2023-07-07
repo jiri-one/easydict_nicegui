@@ -3,7 +3,6 @@ import asyncio
 
 # internal imports
 from backends.sqlite_backend import search_async
-from backends.backend import ResultList
 from settings import images
 from helpers import CreateHtml
 
@@ -12,7 +11,7 @@ class EasyDict:
     def __init__(self):
         self.title = "EasyDict-GUI"
         self.lang = "eng"
-        self.results = ResultList()
+        self.results = None
         self.task = None
         self.search_limit = 1
 
@@ -21,28 +20,31 @@ class EasyDict:
             ui.button(on_click=lambda: left_drawer.toggle()).props(
                 "flat color=white icon=menu"
             )
+            ui.label("EasyDict-GUI").style(
+                "text-align: center; font-weight: bold; font-size: 140%; justify-content: center; margin: auto; display: flex;"
+            )
         self.search_entry = (
-                ui.input(
-                    placeholder="start typing",
-                    on_change=self.search_in_db,
-                    validation={
-                        "Input too short": lambda value: len(value)
-                        if value
-                        else 0 >= self.search_limit
-                    },
-                )
-                .style("width: 100%; margin-right: 10px; margin-left: 10px;")
-                .props("clearable")
-            )
-        self.search_type = ui.toggle(
-                options={
-                    "first_chars": "First chars",
-                    "fulltext": "Fulltext",
-                    "whole_word": "Whole word",
-                },
-                value="first_chars",
+            ui.input(
+                placeholder="start typing",
                 on_change=self.search_in_db,
+                validation={
+                    "Input too short": lambda value: len(value)
+                    if value
+                    else 0 >= self.search_limit
+                },
             )
+            .style("width: 100%; margin-right: 10px; margin-left: 10px;")
+            .props("clearable")
+        )
+        self.search_type = ui.toggle(
+            options={
+                "first_chars": "First chars",
+                "fulltext": "Fulltext",
+                "whole_word": "Whole word",
+            },
+            value="first_chars",
+            on_change=self.search_in_db,
+        )
 
         with ui.left_drawer() as left_drawer:
             ui.label("Side menu")
@@ -52,7 +54,7 @@ class EasyDict:
         with ui.column().style(
             "justify-content: center; margin: auto; display: flex;"
         ) as self.main_column:
-            if not self.results.items:
+            if not self.results:
                 ui.label("Welcome to EasyDict").style(
                     "text-align: center; font-weight: bold; font-size: 140%; justify-content: center; margin: auto; display: flex;"
                 )
@@ -62,6 +64,11 @@ class EasyDict:
                     "The first open source translator which is completely open with dictionary data too."
                 ).style(
                     "text-align: center; font-weight: bold; font-size: 120%; justify-content: center; margin: auto; display: flex;"
+                )
+                return
+            elif not self.results.items:
+                ui.label("No results found.").style(
+                    "text-align: center; font-weight: bold; font-size: 140%; justify-content: center; margin: auto; display: flex;"
                 )
                 return
             with ui.column():
