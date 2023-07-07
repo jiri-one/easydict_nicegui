@@ -71,9 +71,9 @@ class EasyDict:
                     "text-align: center; font-weight: bold; font-size: 140%; justify-content: center; margin: auto; display: flex;"
                 )
                 return
-            with ui.column():
+            with ui.row().style("width: 100vw;"):
                 create_html = CreateHtml(self.results.items, self.lang)
-                ui.html(create_html())
+                ui.html(create_html()).style("width: 100vw;")
 
     def __call__(self):
         ui_args = {
@@ -99,10 +99,10 @@ class EasyDict:
     async def search_in_db(self, *args):
         if self.search_type.value == "fulltext":
             self.search_limit = 3
-            self.search_entry.update()
+            ui.update(self.search_entry)
         else:
             self.search_limit = 1
-            self.search_entry.update()
+            ui.update(self.search_entry)
         if (
             self.search_entry.value
             and len(self.search_entry.value) >= self.search_limit
