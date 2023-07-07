@@ -19,7 +19,7 @@ class Result:
 class ResultList:
     word: str = None
     lang: str = None
-    fulltext: bool = None
+    fulltext: str = None
     on_change: Callable = None
     items: list[Result] = field(default_factory=list)
 
@@ -36,11 +36,9 @@ class DBBackend(ABC):
     ) -> AsyncIterator[Result] | None:
         """The only mandatory method that provides a database search and that must return a result iterator of Results or None."""
 
-    async def search_sorted(
-        self, word, lang, fulltext: bool = None
-    ) -> ResultList | None:
-        results_from_db = self.search_in_db(word, lang, fulltext)
-        results = ResultList(word, lang, fulltext)
+    async def search_sorted(self, word, lang, search_type: str) -> ResultList | None:
+        results_from_db = self.search_in_db(word, lang, search_type)
+        results = ResultList(word, lang, search_type)
         async for result in results_from_db:
             result.matchratio = SequenceMatcher(
                 None, getattr(result, lang), word

@@ -1,8 +1,7 @@
 from pathlib import Path
 import aiosqlite
 import re
-from typing import AsyncIterator
-import asyncio
+from typing import AsyncIterator, Coroutine
 
 # internal imports
 from .backend import DBBackend, Result
@@ -11,12 +10,10 @@ from .backend import DBBackend, Result
 FILE_DB = Path(__file__).parent.parent / "dict_data/easydict.db"
 
 
-async def search_async(
-    word, lang, fulltext: bool = None
-) -> AsyncIterator[Result] | None:
+async def search_async(word, lang, search_type: str) -> Coroutine | None:
     adb = SQLiteBackend(FILE_DB)
     await adb.db_init()
-    return await adb.search_sorted(word, lang, fulltext)
+    return await adb.search_sorted(word, lang, search_type)
 
 
 class SQLiteBackend(DBBackend):
@@ -78,13 +75,13 @@ class SQLiteBackend(DBBackend):
         # save data
         await self.conn.commit()
 
-    async def search_in_db(
-        self, word, lang, fulltext: bool = None
-    ) -> AsyncIterator[Result]:
-        if fulltext:
+    async def search_in_db(self, word, lang, search_type: str) -> AsyncIterator[Result]:
+        if search_type == "fulltext":
             sql = (f"SELECT * FROM eng_cze WHERE {lang} LIKE ?", [f"%{word}%"])
-        else:
+        elif search_type == "whole_word":
             sql = (f"SELECT * FROM eng_cze WHERE {lang} REGEXP ?", [rf"\b{word}\b"])
+        elif search_type == "first_chars":
+            sql = (f"SELECT * FROM eng_cze WHERE {lang} LIKE ?", [f"{word}%"])
 
         async with self.conn.execute(*sql) as cursor:
             async for row in cursor:

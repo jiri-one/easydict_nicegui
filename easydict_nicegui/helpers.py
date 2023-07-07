@@ -5,20 +5,20 @@ class CreateHtml:
         self.html_string = ""
         for item in results:
             self.html_string += self.create_html(item)
-    
+
     def __call__(self):
         return self.html_string
-            
+
     def create_html(self, item):
         if item.notes:
-            notes =  " | " + item.notes
+            notes = " | " + item.notes
         else:
             notes = ""
         if item.special:
-            special =  " | " + item.special
+            special = " | " + item.special
         else:
-            special = ""        
-    
+            special = ""
+
         html = f"""
         <p>{getattr(item, self.lng1)}</b>
         <br>&emsp;{getattr(item, self.lng2)}{notes}{special}<hr />

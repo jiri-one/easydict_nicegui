@@ -13,24 +13,28 @@ class EasyDict:
         self.title = "EasyDict-GUI"
         self.lang = "eng"
         self.results = ResultList()
-        self.search = "First chars"
         self.task = None
+        self.search_limit = 1
 
     def create_header(self):
         with ui.header().classes(add="column", replace="row") as header:
             ui.button(on_click=lambda: left_drawer.toggle()).props(
                 "flat color=white icon=menu"
             )
-            ui.input(
+            self.search_entry = ui.input(
                 placeholder="start typing",
                 on_change=self.search_in_db,
-                validation={"Input too short": lambda value: len(value) > 3},
-            ).style("width: 100%; margin-right: 10px; margin-left: 10px;")
-            toggle = ui.toggle(
-                options=["First chars", "Fulltext", "Whole word"],
-                value="First chars",
-                on_change=self.search_setter
-                ).style("width: 100%;")
+                validation={"Input too short": lambda value: len(value) >= self.search_limit},
+            ).style("width: 100%; margin-right: 10px; margin-left: 10px;").props('clearable')
+            self.search_type = ui.toggle(
+                options={
+                    "first_chars": "First chars",
+                    "fulltext": "Fulltext",
+                    "whole_word": "Whole word",
+                },
+                value="first_chars",
+                on_change=self.search_in_db,
+            ).style("width: 100%;")
 
         with ui.left_drawer() as left_drawer:
             ui.label("Side menu")
@@ -68,16 +72,24 @@ class EasyDict:
         self.create_body()
         ui.run(**ui_args)
 
-    async def search_task(self, word):
-        fulltext = False
-        results = search_async(word=word.value, lang=self.lang, fulltext=fulltext)
+    async def search_task(self, word: str):
+        results = search_async(
+            word=word, lang=self.lang, search_type=self.search_type.value
+        )
         self.results = await results
-        #print(self.results)
+        # print(self.results)
         if self.results:
             self.create_body.refresh()
 
-    async def search_in_db(self, word):
-        if word.value:
+    async def search_in_db(self, *args):
+        if self.search_type.value == "fulltext":
+            self.search_limit = 3
+            self.search_type.update()
+        else:
+            self.search_limit = 1
+            self.search_type.update()
+        if self.search_entry.value and len(self.search_entry.value) >= self.search_limit:
+            print(f"poustim tasky a man {self.search_limit}")
             async with asyncio.TaskGroup() as tg:
                 if self.task:
                     self.task.cancel()
@@ -85,12 +97,14 @@ class EasyDict:
                         await self.task
                     except asyncio.CancelledError:
                         pass
-                self.task = tg.create_task(self.search_task(word))
+                    print(f'canceled: {self.task.cancelled()} or done: {self.task.done()}')
+                self.task = tg.create_task(self.search_task(word=self.search_entry.value))
                 # count = len(self.results.items)
-    
+
     def search_setter(self, value):
-        self.search = value.value
-        print(self.search)
+        print(self.toggle.value)
+        print(value.value)
+        self.search_type = value.value
 
 
 if __name__ in {"__main__", "__mp_main__"}:  # __mp_main__ to allow multiprocessing
