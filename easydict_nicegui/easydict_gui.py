@@ -17,11 +17,11 @@ class EasyDict:
         self.search_limit = 1
 
     def create_header(self):
-        with ui.header().classes(add="column", replace="row") as header:
+        with ui.header() as header:
             ui.button(on_click=lambda: left_drawer.toggle()).props(
                 "flat color=white icon=menu"
             )
-            self.search_entry = (
+        self.search_entry = (
                 ui.input(
                     placeholder="start typing",
                     on_change=self.search_in_db,
@@ -34,7 +34,7 @@ class EasyDict:
                 .style("width: 100%; margin-right: 10px; margin-left: 10px;")
                 .props("clearable")
             )
-            self.search_type = ui.toggle(
+        self.search_type = ui.toggle(
                 options={
                     "first_chars": "First chars",
                     "fulltext": "Fulltext",
@@ -42,7 +42,7 @@ class EasyDict:
                 },
                 value="first_chars",
                 on_change=self.search_in_db,
-            ).style("width: 100%;")
+            )
 
         with ui.left_drawer() as left_drawer:
             ui.label("Side menu")
