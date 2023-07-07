@@ -79,7 +79,9 @@ async def test_search_in_db(adb, dummy_file):
 
     await adb.fill_db(dummy_file)  # fill table with dummy data from dummy file
     # and try search again
-    async for result in adb.search_in_db(word="test", lang="eng", search_type="fulltext"):
+    async for result in adb.search_in_db(
+        word="test", lang="eng", search_type="fulltext"
+    ):
         assert result  # this time we should have some results
         assert isinstance(result, Result)  # and result should be correct type
 
@@ -88,14 +90,23 @@ async def test_search_in_db_with_all_search_types(adb, dummy_file):
     await adb.prepare_db("eng_cze")  # create table
     await adb.fill_db(dummy_file)  # fill table with dummy data from dummy file
     # test fulltext search
-    async for result in adb.search_in_db(word="test", lang="eng", search_type="fulltext"):
+    async for result in adb.search_in_db(
+        word="test", lang="eng", search_type="fulltext"
+    ):
         assert result.eng == "test_eng"
     # test first_chars search
-    async for result in adb.search_in_db(word="eng", lang="eng", search_type="first_chars"):
+    async for result in adb.search_in_db(
+        word="eng", lang="eng", search_type="first_chars"
+    ):
         assert "eng" in result.eng
     # test whole_word search
-    async for result in adb.search_in_db(word="english", lang="eng", search_type="whole_word"):
+    async for result in adb.search_in_db(
+        word="english", lang="eng", search_type="whole_word"
+    ):
         assert result.eng == "english"
+    # test bad type os search_type parameter
     with pytest.raises(ValueError, match="Unknown search_type argument."):
-        async for result in adb.search_in_db(word="ehm", lang="eng", search_type="unknown"):
-            ...
+        async for result in adb.search_in_db(
+            word="ehm", lang="eng", search_type="unknown"
+        ):
+            assert False  # this will never run if no results are found
