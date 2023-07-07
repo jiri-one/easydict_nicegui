@@ -21,11 +21,19 @@ class EasyDict:
             ui.button(on_click=lambda: left_drawer.toggle()).props(
                 "flat color=white icon=menu"
             )
-            self.search_entry = ui.input(
-                placeholder="start typing",
-                on_change=self.search_in_db,
-                validation={"Input too short": lambda value: len(value) >= self.search_limit},
-            ).style("width: 100%; margin-right: 10px; margin-left: 10px;").props('clearable')
+            self.search_entry = (
+                ui.input(
+                    placeholder="start typing",
+                    on_change=self.search_in_db,
+                    validation={
+                        "Input too short": lambda value: len(value)
+                        if value
+                        else 0 >= self.search_limit
+                    },
+                )
+                .style("width: 100%; margin-right: 10px; margin-left: 10px;")
+                .props("clearable")
+            )
             self.search_type = ui.toggle(
                 options={
                     "first_chars": "First chars",
@@ -84,11 +92,14 @@ class EasyDict:
     async def search_in_db(self, *args):
         if self.search_type.value == "fulltext":
             self.search_limit = 3
-            self.search_type.update()
+            self.search_entry.update()
         else:
             self.search_limit = 1
-            self.search_type.update()
-        if self.search_entry.value and len(self.search_entry.value) >= self.search_limit:
+            self.search_entry.update()
+        if (
+            self.search_entry.value
+            and len(self.search_entry.value) >= self.search_limit
+        ):
             print(f"poustim tasky a man {self.search_limit}")
             async with asyncio.TaskGroup() as tg:
                 if self.task:
@@ -97,8 +108,12 @@ class EasyDict:
                         await self.task
                     except asyncio.CancelledError:
                         pass
-                    print(f'canceled: {self.task.cancelled()} or done: {self.task.done()}')
-                self.task = tg.create_task(self.search_task(word=self.search_entry.value))
+                    print(
+                        f"canceled: {self.task.cancelled()} or done: {self.task.done()}"
+                    )
+                self.task = tg.create_task(
+                    self.search_task(word=self.search_entry.value)
+                )
                 # count = len(self.results.items)
 
     def search_setter(self, value):
