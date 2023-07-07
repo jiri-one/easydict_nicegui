@@ -82,6 +82,8 @@ class SQLiteBackend(DBBackend):
             sql = (f"SELECT * FROM eng_cze WHERE {lang} REGEXP ?", [rf"\b{word}\b"])
         elif search_type == "first_chars":
             sql = (f"SELECT * FROM eng_cze WHERE {lang} LIKE ?", [f"{word}%"])
+        else:
+            raise ValueError("Unknown search_type argument.")
 
         async with self.conn.execute(*sql) as cursor:
             async for row in cursor:
